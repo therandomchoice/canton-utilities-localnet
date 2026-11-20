@@ -1,0 +1,24 @@
+# Override for the upstream swagger-ui service (passed to compose after compose.yaml by the Makefile):
+# besides the JSON Ledger API of the three participants, show the Validator, Wallet, Utilities and
+# Token Standard registry APIs. The specs are collected into openapi/ by tools/openapi.sh and served
+# by the swagger-ui container itself (same origin, so their relative $refs resolve).
+services:
+  swagger-ui:
+    environment:
+      URLS: '[
+        {"url": "http://canton.localhost:${APP_PROVIDER_UI_PORT}/docs/openapi", "name": "JSON Ledger API: app-provider"},
+        {"url": "http://canton.localhost:${APP_USER_UI_PORT}/docs/openapi", "name": "JSON Ledger API: app-user"},
+        {"url": "http://canton.localhost:${SV_UI_PORT}/docs/openapi", "name": "JSON Ledger API: sv"},
+        {"url": "/openapi/splice/apps/validator/src/main/openapi/validator-internal.yaml", "name": "Splice Validator API"},
+        {"url": "/openapi/splice/apps/wallet/src/main/openapi/wallet-internal.yaml", "name": "Splice Wallet API"},
+        {"url": "/openapi/utilities/utility.yaml", "name": "Utilities API"},
+        {"url": "/openapi/utilities/utility-token-standard/v1/token-metadata-v1.yaml", "name": "Token Standard registry v1: metadata"},
+        {"url": "/openapi/utilities/utility-token-standard/v1/transfer-instruction-v1.yaml", "name": "Token Standard registry v1: transfer instruction"},
+        {"url": "/openapi/utilities/utility-token-standard/v1/allocation-instruction-v1.yaml", "name": "Token Standard registry v1: allocation instruction"},
+        {"url": "/openapi/utilities/utility-token-standard/v1/allocation-v1.yaml", "name": "Token Standard registry v1: allocation"},
+        {"url": "/openapi/utilities/utility-token-standard/v2/transfer-instruction-v2.yaml", "name": "Token Standard registry v2: transfer instruction"},
+        {"url": "/openapi/utilities/utility-token-standard/v2/allocation-instruction-v2.yaml", "name": "Token Standard registry v2: allocation instruction"},
+        {"url": "/openapi/utilities/utility-token-standard/v2/allocation-v2.yaml", "name": "Token Standard registry v2: allocation"}
+      ]'
+    volumes:
+      - ${LOCALNET_DIR}/../../openapi:/usr/share/nginx/html/openapi:ro
