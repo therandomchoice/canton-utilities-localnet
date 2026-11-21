@@ -5,7 +5,12 @@ PARTY_IDS_ENV := $(CURDIR)/modules/localnet/.party-ids.env
 
 PROJECT := localnet
 
-COMPOSE := IMAGE_TAG=$(IMAGE_TAG) docker compose -p $(PROJECT) \
+# Optional env file enabling Canton alpha protocol versions; empty = off (upstream leaves it unset,
+# which makes compose warn). To enable:
+#   make up ALPHA_PROTOCOL_VERSION_ENV=$(CURDIR)/modules/localnet/env/alpha-protocol-version.env
+ALPHA_PROTOCOL_VERSION_ENV ?=
+
+COMPOSE := IMAGE_TAG=$(IMAGE_TAG) ALPHA_PROTOCOL_VERSION_ENV=$(ALPHA_PROTOCOL_VERSION_ENV) docker compose -p $(PROJECT) \
 	--env-file $(CURDIR)/modules/localnet/compose.env \
 	--env-file $(CURDIR)/modules/localnet/env/common.env \
 	--env-file $(PARTY_IDS_ENV) \
