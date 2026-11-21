@@ -82,13 +82,19 @@ None of these run Utilities locally:
 ### Start and stop
 
 ```bash
-make up          # pull images, start all containers, resolve party IDs (first start takes a few minutes)
+make doctor      # check the host: Docker, Compose, memory, disk, free ports, *.localhost, Node.js
+make up          # run doctor, pull images, start all containers, resolve party IDs, wait until ready
 make down        # stop and remove the containers; ledger data stays in the postgres volume
 ```
 
 `make up` is idempotent. On first start it also allocates the Utilities operator party (see
-[Parties](#parties)). After it returns, darsyncer and hosted-backend may need another 30–60 s to
-upload the DARs and connect to PQS. To start from an empty ledger, remove the volumes:
+[Parties](#parties)). It returns once every container is ready: healthchecks pass, hosted-backend
+answers through nginx and every darsyncer has uploaded its DARs, so the examples can run right away. If a
+container is OOM-killed, becomes unhealthy, exits with an error or keeps restarting, `make up` stops
+and prints the container's state, healthcheck output and last log lines. `make wait` does the same
+check for an already started localnet (`WAIT_TIMEOUT=<seconds>`, default 1200).
+
+To start from an empty ledger, remove the volumes:
 `docker compose -p localnet down -v` (all party IDs change after that, see [Parties](#parties)).
 
 Other targets:
@@ -392,8 +398,9 @@ is byte-for-byte upstream. `diff -r vendor/splice-localnet modules/localnet` sho
 | `swagger-ui.yaml` (new file) | Compose override for the upstream `swagger-ui` service: the list of specs and the `openapi/` mount (see [Swagger UI](#swagger-ui)) |
 
 Outside `modules/localnet`, the `Makefile` passes `.party-ids.env` and `swagger-ui.yaml` to compose, enables the profiles
-`sv`, `app-provider`, `app-user` and `swagger-ui`, and runs `tools/party-ids.sh` after `make up`
-(which allocates the operator party and recreates hosted-backend when the ids change).
+`sv`, `app-provider`, `app-user` and `swagger-ui`, runs `tools/doctor.sh` before `make up` and
+`tools/party-ids.sh` after it (which allocates the operator party and recreates hosted-backend when the
+ids change), and waits for the containers with `tools/wait-healthy.sh`.
 
 ### Utilities on LocalNet: what had to be configured
 
@@ -426,6 +433,12 @@ WebSocket (`/v2/state/active-contracts`) and otherwise falls back to slower HTTP
   that party. Party ids are generated on first start, so `make up` runs `tools/party-ids.sh`, which
   allocates `utility-operator`, writes `modules/localnet/.party-ids.env` (gitignored) and recreates
   hosted-backend if the ids changed.
+- No Docker healthcheck: the image is distroless (no shell, curl or wget; its JRE has no
+  `jdk.compiler` and no script engine), so nothing inside it can call `/readyz` (port 8080). `make up`
+  instead waits until `utility.localhost:4000/api/utilities/v0/operator` answers 200 through nginx,
+  which also covers the nginx route and the operator party.
+- darsyncer has no health endpoint (it listens on no port). It re-checks the participant every 15 s;
+  `tools/wait-healthy.sh` treats it as ready once it has logged `the ledger has all of our packages`.
 - One operator for the whole network matters for the UI as well: it shows only holdings whose
   `operator` equals the operator reported by `/api/utilities/v0/operator`. Per-validator backends with
   different operators leave the holdings page empty on every validator but the operator's own.
