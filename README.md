@@ -57,6 +57,10 @@ None of these run Utilities locally:
   reusable LocalNet for integration tests (Splice 0.10.2, PQS, Keycloak, observability). Its
   token-standard registry is the Amulet registry served by Scan. Its approach of vendoring the
   localnet from `hyperledger-labs/splice` instead of cn-quickstart was adopted here.
+- [bitdynamics-ab/canton-devkit](https://github.com/bitdynamics-ab/canton-devkit): a CLI and web UI
+  (also a DPM component) that manages Splice LocalNet instances pinned by commit SHA (up to Splice
+  0.10.2), with DAR hot deploy, ledger inspection, snapshots and token commands. Its tokens are
+  Amulet and the Splice test token (`splice-test-token-v2`), not Utilities registry instruments.
 - [Fairmint/canton-dev-tools](https://github.com/Fairmint/canton-dev-tools): a CLI wrapper around
   cn-quickstart (default pin Splice 0.6.14).
 - [NaundorfIT/cc-dev-llm-context](https://github.com/NaundorfIT/cc-dev-llm-context): a CIP-56 example
